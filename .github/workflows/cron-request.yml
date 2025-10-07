@@ -1,0 +1,62 @@
+name: Multi Request with Response Time Tracking
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Chạy mỗi 5 phút (UTC time)
+  workflow_dispatch:  # Cho phép chạy thủ công từ GitHub UI
+
+jobs:
+  send-requests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Multiple HTTP Requests
+        run: |
+          # Danh sách URL để gửi request (thay bằng URL thực tế)
+          URLS=(
+            "https://www.phimtv.net/vi"
+            "https://funtv-ol7y.onrender.com/"
+            "https://funtv-ol7y.onrender.com/vi/favorites"
+          )
+          
+          # User-Agent giả lập thiết bị di động
+          USER_AGENT="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
+          
+          # File để lưu log
+          LOG_FILE="request.log"
+          echo "Request Log - Started at $(date -u '+%Y-%m-%d %H:%M:%S UTC')" > $LOG_FILE
+          
+          # Lặp qua từng URL và gửi request
+          for URL in "${URLS[@]}"; do
+            TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            # Ghi thời gian bắt đầu và đo thời gian phản hồi
+            START_TIME=$(date +%s%N)
+            RESPONSE=$(curl -X GET "$URL" \
+              -H "User-Agent: $USER_AGENT" \
+              -H "Accept: application/json" \
+              --fail --silent --show-error \
+              --write-out "%{http_code}|%{time_total}" 2>&1)
+            END_TIME=$(date +%s%N)
+            
+            # Tính thời gian phản hồi (milliseconds)
+            RESPONSE_TIME=$(( (END_TIME - START_TIME) / 1000000 ))
+            
+            # Tách mã trạng thái và thời gian từ response
+            HTTP_CODE=$(echo "$RESPONSE" | awk -F'|' '{print $1}')
+            TIME_TOTAL=$(echo "$RESPONSE" | awk -F'|' '{print $2}')
+            
+            # Ghi log
+            if [ $? -eq 0 ]; then
+              echo "[$TIMESTAMP] Success: HTTP $HTTP_CODE | Response Time: ${RESPONSE_TIME}ms | URL: $URL" >> $LOG_FILE
+            else
+              echo "[$TIMESTAMP] Failed: HTTP $HTTP_CODE | Response Time: ${RESPONSE_TIME}ms | URL: $URL" >> $LOG_FILE
+            fi
+          done
+          
+          # In log ra console để kiểm tra
+          cat $LOG_FILE
+      - name: Archive Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: request-logs
+          path: request.log
