@@ -1,0 +1,31 @@
+name: Cleanup Old Workflow Runs and Artifacts
+
+on:
+  schedule:
+    - cron: '0 0 */5 * *'  # Chạy mỗi 5 ngày lúc 00:00 (UTC)
+  workflow_dispatch:  # Cho phép chạy thủ công
+
+permissions:
+  actions: write  # Cần quyền xóa
+
+jobs:
+  delete-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old workflow runs
+        uses: JuvenileQ/delete-workflow-runs@main  # Action từ Marketplace 
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 5  # Giữ lại runs <5 ngày, xóa cũ hơn
+          keep_minimum_runs: 5  # Giữ ít nhất 5 runs mới nhất mỗi workflow
+          delete_workflow: false  # Không xóa file workflow YAML
+
+  delete-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Purge old artifacts
+        uses: kolpav/purge-artifacts-action@v1  # Action từ Marketplace 
+        with:
+          token: ${{ github.token }}
+          expire-in: 7days  # Xóa artifacts >7 ngày (set 0 để xóa tất cả)
