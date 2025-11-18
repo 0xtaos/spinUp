@@ -14,8 +14,9 @@ jobs:
           # Danh sách URL để gửi request (thay bằng URL thực tế)
           URLS=(
             "https://www.phimtv.net/vi"
-            "https://funtv-ol7y.onrender.com/"
+            "https://www.fimtv.net/vi"
             "https://www.phimtv.net/vi/favorites"
+            "https://www.fimtv.net/vi/favorites"
           )
           
           # User-Agent giả lập thiết bị di động
