@@ -21,18 +21,13 @@ jobs:
           
           # User-Agent giả lập thiết bị di động
           USER_AGENT="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
-          
+
           # Lặp qua từng URL và gửi request
           for URL in "${URLS[@]}"; do
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-            echo "[$TIMESTAMP] Sending request to $URL"
-            RESPONSE=$(curl -X GET "$URL" \
+            HTTP_CODE=$(curl -X GET "$URL" \
               -H "User-Agent: $USER_AGENT" \
               -H "Accept: application/json" \
-              --fail --silent --show-error --write-out "%{http_code}" 2>&1)
-            if [ $? -eq 0 ]; then
-              echo "[$TIMESTAMP] Success: HTTP $RESPONSE - $URL"
-            else
-              echo "[$TIMESTAMP] Failed: $RESPONSE - $URL"
-            fi
+              --silent --output /dev/null --write-out "%{http_code}")
+            echo "[$TIMESTAMP] $HTTP_CODE - $URL"
           done
